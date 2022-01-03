@@ -41,17 +41,22 @@ public class AnnotationProcessor extends AbstractProcessor {
                     JCTree.JCExpressionStatement startStat = treeMaker.Exec(
                             treeMaker.Apply(
                                     List.nil(),
-                                    treeMaker.Select(
-                                            treeMaker.Ident(names.fromString(MyLog.class.getName())), // . 左边的内容
-                                            names.fromString("log") // . 右边的内容
+                                    treeMaker.Select(treeMaker.Select(
+                                            treeMaker.Ident(names.fromString("processor")),
+                                            names.fromString("MyLog")),
+                                            names.fromString("log")
+
                                     ),
                                     List.of(treeMaker.Literal("?????哈哈哈？？？？？")) // 方法中的内容
                             )
                     );
-                    jcMethodDecl.getBody().getStatements().append(startStat);
                     System.out.println("=================visitMethodDef==============");
-
-                    result = jcMethodDecl;
+                    ListBuffer<JCTree.JCStatement> list = new ListBuffer();
+                    list.addAll(jcMethodDecl.getBody().getStatements());
+                    list.add(startStat);
+                    jcMethodDecl.getBody().stats =list.toList();
+//                    result = jcMethodDecl;
+                    super.visitMethodDef(jcMethodDecl);
                 }
 
             });
