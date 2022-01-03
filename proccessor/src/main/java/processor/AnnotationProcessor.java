@@ -47,16 +47,13 @@ public class AnnotationProcessor extends AbstractProcessor {
                                             names.fromString("log")
 
                                     ),
-                                    List.of(treeMaker.Literal("?????哈哈哈？？？？？")) // 方法中的内容
+                                    List.of(treeMaker.Literal(" start log ?????哈哈哈？？？？？")) // 方法中的内容
                             )
                     );
                     System.out.println("=================visitMethodDef==============");
-                    ListBuffer<JCTree.JCStatement> list = new ListBuffer();
-                    list.addAll(jcMethodDecl.getBody().getStatements());
-                    list.add(startStat);
-                    jcMethodDecl.getBody().stats =list.toList();
-//                    result = jcMethodDecl;
-                    super.visitMethodDef(jcMethodDecl);
+                    jcMethodDecl.getBody().stats =
+                            jcMethodDecl.getBody().getStatements().prepend(startStat);
+                    result = jcMethodDecl;
                 }
 
             });
