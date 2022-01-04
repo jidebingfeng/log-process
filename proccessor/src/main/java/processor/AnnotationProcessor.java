@@ -18,7 +18,7 @@ import java.util.Set;
  *      https://gitee.com/alsd51/Doraemon/blob/master/aboutjava/src/main/java/aboutjava/annotion/combat/CombatJCTreeProcessor.java
  *      https://segmentfault.com/a/1190000022157161
  */
-@SupportedAnnotationTypes(value = {"processor.Test"})
+@SupportedAnnotationTypes(value = {"processor.MethodAnnotation"})
 @SupportedSourceVersion(value = SourceVersion.RELEASE_8)
 public class AnnotationProcessor extends AbstractProcessor {
 
@@ -31,7 +31,7 @@ public class AnnotationProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
         System.out.println("=================process==============");
-        Set<? extends Element> set = roundEnv.getElementsAnnotatedWith(Test.class);
+        Set<? extends Element> set = roundEnv.getElementsAnnotatedWith(MethodAnnotation.class);
         set.forEach(element -> {
             JCTree jcTree = trees.getTree(element);
             jcTree.accept(new TreeTranslator() {

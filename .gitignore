@@ -1,2 +1,4 @@
 /user/target/
 /proccessor/target/
+.idea/
+*.iml
