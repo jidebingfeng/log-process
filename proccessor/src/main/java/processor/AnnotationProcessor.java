@@ -1,6 +1,7 @@
 package processor;
 import com.sun.tools.javac.api.JavacTrees;
 import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.TreeMaker;
@@ -10,7 +11,9 @@ import com.sun.tools.javac.util.*;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import java.text.MessageFormat;
 import java.util.Set;
 
 /**
@@ -31,35 +34,79 @@ public class AnnotationProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
         System.out.println("=================process==============");
-        Set<? extends Element> set = roundEnv.getElementsAnnotatedWith(MethodAnnotation.class);
-        set.forEach(element -> {
-            JCTree jcTree = trees.getTree(element);
-            jcTree.accept(new TreeTranslator() {
-                @Override
-                public void visitMethodDef(JCTree.JCMethodDecl jcMethodDecl){
-                    super.visitMethodDef(jcMethodDecl);
-                    JCTree.JCExpressionStatement startStat = treeMaker.Exec(
-                            treeMaker.Apply(
-                                    List.nil(),
-                                    treeMaker.Select(treeMaker.Select(
-                                            treeMaker.Ident(names.fromString("processor")),
-                                            names.fromString("MyLog")),
-                                            names.fromString("log")
+        for (Element rootElement : roundEnv.getRootElements()) {
+            if(ElementKind.CLASS.equals(rootElement.getKind())){
+                // 类
+                Symbol.ClassSymbol classSymbol = (Symbol.ClassSymbol) rootElement;
+                handleClass(classSymbol);
 
-                                    ),
-                                    List.of(treeMaker.Literal(" start log ?????哈哈哈？？？？？")) // 方法中的内容
-                            )
-                    );
-                    System.out.println("=================visitMethodDef==============");
-                    jcMethodDecl.getBody().stats =
-                            jcMethodDecl.getBody().getStatements().prepend(startStat);
-                    result = jcMethodDecl;
-                }
-
-            });
-        });
-
+            }
+        }
         return true;
+    }
+
+    private void handleClass(Symbol.ClassSymbol classSymbol) {
+        for (Symbol enclosedElement : classSymbol.getEnclosedElements()) {
+
+            if(ElementKind.METHOD.equals(enclosedElement.getKind())){
+                // 方法
+                Symbol.MethodSymbol methodSymbol = (Symbol.MethodSymbol) enclosedElement;
+
+                handleMethod(methodSymbol);
+            }
+        }
+    }
+
+    private void handleMethod(Symbol.MethodSymbol methodSymbol) {
+        JCTree jcTree = trees.getTree(methodSymbol);
+        jcTree.accept(new TreeTranslator() {
+            @Override
+            public void visitMethodDef(JCTree.JCMethodDecl jcMethodDecl){
+                super.visitMethodDef(jcMethodDecl);
+
+                String methodName = MessageFormat.format("{0}:{1}", methodSymbol.owner.toString(), methodSymbol.toString());
+                System.out.println("=================visitMethodDef==============");
+//                messager.printMessage();
+                jcMethodDecl.getBody().stats = modifyBodyStatment(methodName,jcMethodDecl.getBody().getStatements());
+                result = jcMethodDecl;
+            }
+
+        });
+    }
+
+    private List<JCTree.JCStatement> modifyBodyStatment(String methodName,List<JCTree.JCStatement> oldStatments){
+        ListBuffer<JCTree.JCStatement> listBuffer = new ListBuffer<>();
+
+        listBuffer.add(getLogStartStatement(methodName,null));
+        listBuffer.addAll(oldStatments);
+        listBuffer.add(getLogEndStatement(methodName,null));
+
+
+        return listBuffer.toList();
+    }
+
+    private JCTree.JCExpressionStatement getLogStartStatement(String methodName,String attr) {
+        String msg = MessageFormat.format("<{0} attr=\"{1}\" >", methodName, attr != null ? attr : "");
+        return getLogStatement(msg);
+    }
+
+    private JCTree.JCExpressionStatement getLogEndStatement(String methodName,String attr) {
+        String msg = MessageFormat.format("</{0} attr=\"{1}\" >", methodName, attr != null ? attr : "");
+        return getLogStatement(msg);
+    }
+
+    private JCTree.JCExpressionStatement getLogStatement(String msg) {
+        return treeMaker.Exec(
+                    treeMaker.Apply(
+                            List.nil(),
+                            treeMaker.Select(treeMaker.Select(
+                                    treeMaker.Ident(names.fromString("processor")),
+                                    names.fromString("MyLog")),
+                                    names.fromString("log")
+                            ),
+                            List.of(treeMaker.Literal(msg))
+                    )
+            );
     }
 
 
