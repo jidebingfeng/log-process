@@ -16,6 +16,8 @@ public class User {
 
         if(Math.random() >= 0.5) b =8;
 
+        if(Math.random() > 0.5 )return;
+
         if(Math.random() >= 0.5){
             b =8;
         }
@@ -27,7 +29,7 @@ public class User {
         }else if(b==-1){
             System.out.println("b == -1");
         }else{
-            System.out.println("other");
+            return;
         }
 
         Stream.iterate(0,t->t+1).limit(10).map(t->Math.random())

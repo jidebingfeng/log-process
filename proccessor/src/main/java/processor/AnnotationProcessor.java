@@ -79,7 +79,7 @@ public class AnnotationProcessor extends AbstractProcessor {
 
                 String methodName = MessageFormat.format("{0}:{1}", methodSymbol.owner.toString(), methodSymbol.toString());
                 if(!"jsr269.user.impl.User:test()".equals(methodName)){
-//                    return;
+                    return;
                 }
                 jcMethodDecl.getBody().stats = modifyStatements(methodName,null,jcMethodDecl.getBody().getStatements());
                 result = jcMethodDecl;
@@ -128,13 +128,13 @@ public class AnnotationProcessor extends AbstractProcessor {
 
     private JCTree.JCExpressionStatement getLogStartStatement(String pre,String attr) {
         String msg = MessageFormat.format("<{0} attr=\"{1}\" >", pre, attr != null ? attr : "");
-        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add start log:"+pre);
+        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add start log:"+pre+attr);
         return getLogStatement(msg);
     }
 
     private JCTree.JCExpressionStatement getLogEndStatement(String pre,String attr) {
         String msg = MessageFormat.format("</{0} attr=\"{1}\" >", pre, attr != null ? attr : "");
-        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add end log:"+pre);
+        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add end log:"+pre+attr);
         return getLogStatement(msg);
     }
 
