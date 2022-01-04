@@ -13,7 +13,9 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
 import java.text.MessageFormat;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -21,7 +23,7 @@ import java.util.Set;
  *      https://gitee.com/alsd51/Doraemon/blob/master/aboutjava/src/main/java/aboutjava/annotion/combat/CombatJCTreeProcessor.java
  *      https://segmentfault.com/a/1190000022157161
  */
-@SupportedAnnotationTypes(value = {"processor.MethodAnnotation"})
+@SupportedAnnotationTypes(value = {"processor.PackageAnnotation"})
 @SupportedSourceVersion(value = SourceVersion.RELEASE_8)
 public class AnnotationProcessor extends AbstractProcessor {
 
@@ -32,6 +34,17 @@ public class AnnotationProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        Set<? extends Element> packages = roundEnv.getElementsAnnotatedWith(PackageAnnotation.class);
+        Set<String> packageNames = new HashSet<>();
+        for (Element element : roundEnv.getElementsAnnotatedWith(PackageAnnotation.class)) {
+            if(ElementKind.PACKAGE.equals(element.getKind())){
+                Symbol.PackageSymbol packageSymbol = (Symbol.PackageSymbol) element;
+
+                packageNames.add(packageSymbol.toString());
+            }
+        }
+
+
 
         System.out.println("=================process==============");
         for (Element rootElement : roundEnv.getRootElements()) {
@@ -65,8 +78,7 @@ public class AnnotationProcessor extends AbstractProcessor {
                 super.visitMethodDef(jcMethodDecl);
 
                 String methodName = MessageFormat.format("{0}:{1}", methodSymbol.owner.toString(), methodSymbol.toString());
-                System.out.println("=================visitMethodDef==============");
-//                messager.printMessage();
+                messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add log:"+methodName);
                 jcMethodDecl.getBody().stats = modifyBodyStatment(methodName,jcMethodDecl.getBody().getStatements());
                 result = jcMethodDecl;
             }

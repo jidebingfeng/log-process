@@ -1,6 +1,4 @@
-package user.impl;
-
-import processor.MethodAnnotation;
+package jsr269.user.impl;
 
 import java.util.stream.Stream;
 
@@ -8,10 +6,9 @@ import java.util.stream.Stream;
  * @author long.zhou1@dmall.com
  * @date 2022/1/4 11:21
  */
-public class UseInstance {
+public class User {
     private String s = "sssss";
 
-    @MethodAnnotation
     public void test(){
         System.out.println("this is oragin print");
         Integer b = Math.random() >= 0.5?1:0;
