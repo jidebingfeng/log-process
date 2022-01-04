@@ -12,12 +12,22 @@ public class User {
     public void test(){
         System.out.println("this is oragin print");
         Integer b = Math.random() >= 0.5?1:0;
+
+
+        if(Math.random() >= 0.5) b =8;
+
+        if(Math.random() >= 0.5){
+            b =8;
+        }
+
         if(b==1){
-            System.out.println("ge 0.5");
+            System.out.println("b == 1");
         }else if(b==0){
-            System.out.println("lt 0.5");
+            System.out.println("b == 0");
+        }else if(b==-1){
+            System.out.println("b == -1");
         }else{
-            System.out.println("UNKOWN");
+            System.out.println("other");
         }
 
         Stream.iterate(0,t->t+1).limit(10).map(t->Math.random())

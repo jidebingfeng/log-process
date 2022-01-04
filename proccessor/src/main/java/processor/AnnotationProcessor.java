@@ -78,32 +78,63 @@ public class AnnotationProcessor extends AbstractProcessor {
                 super.visitMethodDef(jcMethodDecl);
 
                 String methodName = MessageFormat.format("{0}:{1}", methodSymbol.owner.toString(), methodSymbol.toString());
-                messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add log:"+methodName);
-                jcMethodDecl.getBody().stats = modifyBodyStatment(methodName,jcMethodDecl.getBody().getStatements());
+                if(!"jsr269.user.impl.User:test()".equals(methodName)){
+//                    return;
+                }
+                jcMethodDecl.getBody().stats = modifyStatements(methodName,null,jcMethodDecl.getBody().getStatements());
                 result = jcMethodDecl;
             }
 
         });
     }
 
-    private List<JCTree.JCStatement> modifyBodyStatment(String methodName,List<JCTree.JCStatement> oldStatments){
+    private List<JCTree.JCStatement> modifyStatements(String preName,String attr, List<JCTree.JCStatement> oldStatments){
         ListBuffer<JCTree.JCStatement> listBuffer = new ListBuffer<>();
 
-        listBuffer.add(getLogStartStatement(methodName,null));
-        listBuffer.addAll(oldStatments);
-        listBuffer.add(getLogEndStatement(methodName,null));
+        listBuffer.add(getLogStartStatement(preName,attr));
+        for (JCTree.JCStatement oldStatment : oldStatments) {
+            listBuffer.add(convert(preName,oldStatment));
+        }
+        listBuffer.add(getLogEndStatement(preName,attr));
 
 
         return listBuffer.toList();
     }
 
-    private JCTree.JCExpressionStatement getLogStartStatement(String methodName,String attr) {
-        String msg = MessageFormat.format("<{0} attr=\"{1}\" >", methodName, attr != null ? attr : "");
+    private JCTree.JCStatement convert(String preName,JCTree.JCStatement oldStatment) {
+        if(oldStatment instanceof JCTree.JCIf){
+            JCTree.JCIf ifStatment = (JCTree.JCIf) oldStatment;
+
+            JCTree.JCStatement thenStatement = ifStatment.getThenStatement();
+            if(thenStatement instanceof JCTree.JCBlock){
+                JCTree.JCBlock blockStatement = (JCTree.JCBlock) thenStatement;
+                blockStatement.stats = modifyStatements(preName+":if",ifStatment.cond.toString(),blockStatement.stats);
+            }
+
+            JCTree.JCStatement elseStatement = ifStatment.getElseStatement();
+            if(elseStatement != null){
+                if(elseStatement instanceof JCTree.JCBlock) {
+
+                    JCTree.JCBlock blockStatement = (JCTree.JCBlock) elseStatement;
+                    blockStatement.stats = modifyStatements(preName + ":else", ifStatment.cond.toString(), blockStatement.stats);
+                }else if(elseStatement instanceof JCTree.JCIf){
+                    ifStatment.elsepart = convert(preName,elseStatement);
+                }
+            }
+
+        }
+        return oldStatment;
+    }
+
+    private JCTree.JCExpressionStatement getLogStartStatement(String pre,String attr) {
+        String msg = MessageFormat.format("<{0} attr=\"{1}\" >", pre, attr != null ? attr : "");
+        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add start log:"+pre);
         return getLogStatement(msg);
     }
 
-    private JCTree.JCExpressionStatement getLogEndStatement(String methodName,String attr) {
-        String msg = MessageFormat.format("</{0} attr=\"{1}\" >", methodName, attr != null ? attr : "");
+    private JCTree.JCExpressionStatement getLogEndStatement(String pre,String attr) {
+        String msg = MessageFormat.format("</{0} attr=\"{1}\" >", pre, attr != null ? attr : "");
+        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add end log:"+pre);
         return getLogStatement(msg);
     }
 
