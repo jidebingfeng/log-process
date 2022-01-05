@@ -95,7 +95,9 @@ public class AnnotationProcessor extends AbstractProcessor {
         for (JCTree.JCStatement oldStatment : oldStatments) {
             listBuffer.add(convert(preName,oldStatment));
         }
-        listBuffer.add(getLogEndStatement(preName,attr));
+        if(!(oldStatments.last() instanceof JCTree.JCReturn)){
+            listBuffer.add(getLogEndStatement(preName,attr));
+        }
 
 
         return listBuffer.toList();
@@ -134,7 +136,7 @@ public class AnnotationProcessor extends AbstractProcessor {
 
     private JCTree.JCExpressionStatement getLogEndStatement(String pre,String attr) {
         String msg = MessageFormat.format("</{0} attr=\"{1}\" >", pre, attr != null ? attr : "");
-        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add end log:"+pre+attr);
+        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add end   log:"+pre+attr);
         return getLogStatement(msg);
     }
 

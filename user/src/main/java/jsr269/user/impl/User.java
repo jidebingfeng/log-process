@@ -1,5 +1,7 @@
 package jsr269.user.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -32,10 +34,23 @@ public class User {
             return;
         }
 
-        Stream.iterate(0,t->t+1).limit(10).map(t->Math.random())
-                .filter(t->t>=0.5).forEach(t->{
-                    System.out.println(t);
-                });
+        List<Double> list = Stream.iterate(0, t -> t + 1).limit(10)
+                .map(t -> Math.random()).collect(Collectors.toList());
+
+        for (Double d : list) {
+            if(d > 0.3)continue;
+
+            if(d > 0.4){
+                continue;
+            }
+
+            if(d> 0.99)return;
+
+            if(d>0.9){
+                return;
+            }
+            System.out.println(d);
+        }
 
 
     }
