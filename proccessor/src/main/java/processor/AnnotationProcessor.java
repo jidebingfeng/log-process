@@ -91,11 +91,20 @@ public class AnnotationProcessor extends AbstractProcessor {
     private List<JCTree.JCStatement> modifyStatements(String preName,String attr, List<JCTree.JCStatement> oldStatments){
         ListBuffer<JCTree.JCStatement> listBuffer = new ListBuffer<>();
 
-        listBuffer.add(getLogStartStatement(preName,attr));
+        // 第一行日志打印
+        if(isEndStatement(oldStatments.head)){
+            listBuffer.add(getLogSingleStatement(preName,attr,oldStatments.head.toString()));
+        }else{
+            listBuffer.add(getLogStartStatement(preName,attr));
+        }
+
+        // 原理逻辑
         for (JCTree.JCStatement oldStatment : oldStatments) {
             listBuffer.add(convert(preName,oldStatment));
         }
-        if(!(oldStatments.last() instanceof JCTree.JCReturn)){
+
+        // 最后一行日志打印
+        if(!isEndStatement(oldStatments.last())){
             listBuffer.add(getLogEndStatement(preName,attr));
         }
 
@@ -103,7 +112,14 @@ public class AnnotationProcessor extends AbstractProcessor {
         return listBuffer.toList();
     }
 
+    private boolean isEndStatement(JCTree.JCStatement lastStatment) {
+        return lastStatment instanceof JCTree.JCReturn
+                || lastStatment instanceof JCTree.JCBreak
+                || lastStatment instanceof JCTree.JCContinue;
+    }
+
     private JCTree.JCStatement convert(String preName,JCTree.JCStatement oldStatment) {
+
         if(oldStatment instanceof JCTree.JCIf){
             JCTree.JCIf ifStatment = (JCTree.JCIf) oldStatment;
 
@@ -111,6 +127,9 @@ public class AnnotationProcessor extends AbstractProcessor {
             if(thenStatement instanceof JCTree.JCBlock){
                 JCTree.JCBlock blockStatement = (JCTree.JCBlock) thenStatement;
                 blockStatement.stats = modifyStatements(preName+":if",ifStatment.cond.toString(),blockStatement.stats);
+            }else{
+                List<JCTree.JCStatement> newStatement = modifyStatements(preName+":if",ifStatment.cond.toString(),List.of(thenStatement));
+                ifStatment.thenpart = treeMaker.Block(0,newStatement);
             }
 
             JCTree.JCStatement elseStatement = ifStatment.getElseStatement();
@@ -121,21 +140,33 @@ public class AnnotationProcessor extends AbstractProcessor {
                     blockStatement.stats = modifyStatements(preName + ":else", ifStatment.cond.toString(), blockStatement.stats);
                 }else if(elseStatement instanceof JCTree.JCIf){
                     ifStatment.elsepart = convert(preName,elseStatement);
+                }else{
+                    List<JCTree.JCStatement> newStatement = modifyStatements(preName + ":else", ifStatment.cond.toString(), List.of(elseStatement));
+                    ifStatment.elsepart = treeMaker.Block(0,newStatement);
+
                 }
             }
-
         }
+
         return oldStatment;
     }
 
+
+
     private JCTree.JCExpressionStatement getLogStartStatement(String pre,String attr) {
-        String msg = MessageFormat.format("<{0} attr=\"{1}\" >", pre, attr != null ? attr : "");
+        String msg = MessageFormat.format("excuted {0}{1}", pre, attr != null ? attr : "");
         messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add start log:"+pre+attr);
         return getLogStatement(msg);
     }
 
+    private JCTree.JCExpressionStatement getLogSingleStatement(String pre,String attr,String res) {
+        String msg = MessageFormat.format("excuted {0}{1} res:{2}", pre, attr != null ? attr : "",res);
+        messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add single log:"+pre+attr);
+        return getLogStatement(msg);
+    }
+
     private JCTree.JCExpressionStatement getLogEndStatement(String pre,String attr) {
-        String msg = MessageFormat.format("</{0} attr=\"{1}\" >", pre, attr != null ? attr : "");
+        String msg = MessageFormat.format("excuted {0}{1}", pre, attr != null ? attr : "");
         messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING,"modify code, add end   log:"+pre+attr);
         return getLogStatement(msg);
     }
@@ -164,18 +195,5 @@ public class AnnotationProcessor extends AbstractProcessor {
         Context context = ((JavacProcessingEnvironment) processingEnv).getContext();
         this.treeMaker = TreeMaker.instance(context);
         this.names = Names.instance(context);
-    }
-
-    private JCTree.JCMethodDecl makeGetterMethodDecl(JCTree.JCVariableDecl jcVariableDecl) {
-
-        ListBuffer<JCTree.JCStatement> statements = new ListBuffer<>();
-        statements.append(treeMaker.Return(treeMaker.Select(treeMaker.Ident(names.fromString("this")), jcVariableDecl.getName())));
-        JCTree.JCBlock body = treeMaker.Block(0, statements.toList());
-        return treeMaker.MethodDef(treeMaker.Modifiers(Flags.PUBLIC), getNewMethodName(jcVariableDecl.getName()), jcVariableDecl.vartype, List.nil(), List.nil(), List.nil(), body, null);
-    }
-
-    private Name getNewMethodName(Name name) {
-        String s = name.toString();
-        return names.fromString("get" + s.substring(0, 1).toUpperCase() + s.substring(1, name.length()));
     }
 }

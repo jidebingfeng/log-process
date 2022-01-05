@@ -44,14 +44,32 @@ public class User {
                 continue;
             }
 
+            if(d> 0.99)break;
+
+            if(d>0.9){
+                break;
+            }
+
             if(d> 0.99)return;
 
             if(d>0.9){
                 return;
             }
             System.out.println(d);
+
+            if(d>100)return;
+            else return;
         }
 
+        if(Math.random() > 0.5 )return;
 
+    }
+
+    public void test1(){
+
+        if(Math.random() > 0.3)return;
+
+
+        System.out.println("ddd");
     }
 }
