@@ -1,4 +1,5 @@
 package processor;
+import com.google.auto.service.AutoService;
 import com.sun.tools.javac.api.JavacTrees;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
@@ -25,6 +26,7 @@ import java.util.Set;
  */
 @SupportedAnnotationTypes(value = {"processor.PackageAnnotation"})
 @SupportedSourceVersion(value = SourceVersion.RELEASE_8)
+@AutoService(Processor.class)
 public class AnnotationProcessor extends AbstractProcessor {
 
     private Messager messager;
