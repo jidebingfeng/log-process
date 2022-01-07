@@ -116,6 +116,7 @@ public class AnnotationProcessor extends AbstractProcessor {
 
     private boolean isEndStatement(JCTree.JCStatement lastStatment) {
         return lastStatment instanceof JCTree.JCReturn
+                || lastStatment instanceof JCTree.JCThrow
                 || lastStatment instanceof JCTree.JCBreak
                 || lastStatment instanceof JCTree.JCContinue;
     }

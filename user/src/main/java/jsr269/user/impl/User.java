@@ -63,6 +63,8 @@ public class User {
 
         if(Math.random() > 0.5 )return;
 
+        throw new RuntimeException("");
+
     }
 
     public void test1(){
